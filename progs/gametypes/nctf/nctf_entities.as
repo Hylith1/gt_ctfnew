@@ -240,6 +240,13 @@ class cFlagBase
         Entity @target = null;
         Vec3 origin = this.owner.origin;
 
+        if(decal.frame != int( CTF_UNLOCK_RADIUS.value )){
+        	Entity @decal = @this.decal;
+			@this.decal = @decal;
+	        decal.frame = int( CTF_UNLOCK_RADIUS.value );
+			decal.linkEntity();
+        }
+
         if ( CTF_UNLOCK_TIME.value > 0 && !ctfInstantFlag.boolean )
         {
 			array<Entity @> @inradius = G_FindInRadius( origin, CTF_UNLOCK_RADIUS.value );
