@@ -87,7 +87,7 @@ class cFlagBase
         decal.modelindex = prcFlagIndicatorDecal;
 		decal.modelindex2 = 0; // rotation angle for ET_DECAL		
         decal.team = spawner.team;
-        decal.frame = int( CTF_CAPTURE_RADIUS.value ); // radius in case of ET_DECAL
+        decal.frame = int( CTF_UNLOCK_RADIUS.value ); // radius in case of ET_DECAL
         decal.svflags = spawner.svflags | SVF_TRANSMITORIGIN2;
 		decal.linkEntity();
 		
