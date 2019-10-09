@@ -26,11 +26,11 @@ float CTF_CAPTURE_RADIUS = 40.0f;
 
 const float CTF_AUTORETURN_TIME = 30.0f;
 const int CTF_BONUS_RECOVERY = 2;
-const int CTF_BONUS_STEAL = 1;
-const int CTF_BONUS_CAPTURE = 10;
-const int CTF_BONUS_CAPTURE_ASSISTANCE = 4;
+const int CTF_BONUS_STEAL = 3;
+const int CTF_BONUS_CAPTURE = 7;
+const int CTF_BONUS_CAPTURE_ASSISTANCE = 3;
 const int CTF_BONUS_CARRIER_KILL = 2;
-const int CTF_BONUS_CARRIER_PROTECT = 2;
+const int CTF_BONUS_CARRIER_PROTECT = 3;
 const int CTF_BONUS_FLAG_DEFENSE = 1;
 
 const float CTF_FLAG_RECOVERY_BONUS_DISTANCE = 512.0f;
@@ -289,6 +289,36 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
             return true;
         }
+        else if ( votename == "ctf_hide_steal_status" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            int value = voteArg.toInt();
+            if ( voteArg != "0" && voteArg != "1" )
+            {
+                client.printMessage( "Callvote " + votename + " expects a 1 or a 0 as argument\n" );
+                return false;
+            }
+            
+            if ( voteArg == "0" && !CTF_HIDE_STEAL_STATUS.boolean )
+            {
+                client.printMessage(  votename + " are already shown\n" );
+                return false;
+            }
+
+            if ( voteArg == "1" && CTF_HIDE_STEAL_STATUS.boolean )
+            {
+                client.printMessage(  votename + " are already hidden\n" );
+                return false;
+            }
+
+            return true;
+        }
         else if ( votename == "ctf_unlock_time" )
         {
             String voteArg = argsString.getToken( 1 );
@@ -382,6 +412,12 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 ctfInstantFlag.set( 1 );
             else
                 ctfInstantFlag.set( 0 );
+        }else if ( votename == "ctf_hide_steal_status" )
+        {
+            if ( argsString.getToken( 1 ).toInt() > 0 )
+                CTF_HIDE_STEAL_STATUS.set( 1 );
+            else
+                CTF_HIDE_STEAL_STATUS.set( 0 );
         }else{
             float val = argsString.getToken( 1 ).toFloat();
             if ( val >= 0 ){
@@ -862,7 +898,7 @@ void GT_ThinkRules()
         if ( ent.team == TEAM_ALPHA )
         {
             // if our flag is being stolen
-            if ( alphaStatUnlock != 0 )
+            if ( alphaStatUnlock != 0 && !CTF_HIDE_STEAL_STATUS.boolean)
                 ent.client.setHUDStat( STAT_PROGRESS_SELF, -( alphaStatUnlock ) );
             // we are capturing the enemy's flag
             else if ( alphaStatCap != 0 )
@@ -897,7 +933,7 @@ void GT_ThinkRules()
         else if ( ent.team == TEAM_BETA )
         {
             // if our flag is being stolen
-            if ( betaStatUnlock != 0 )
+            if ( betaStatUnlock != 0 && !CTF_HIDE_STEAL_STATUS.boolean)
                 ent.client.setHUDStat( STAT_PROGRESS_SELF, -( betaStatUnlock ) );
             // we are capturing the enemy's flag
             else if ( betaStatCap != 0 )
