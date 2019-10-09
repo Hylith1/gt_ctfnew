@@ -78,7 +78,8 @@ Cvar CTF_UNLOCK_RADIUS( "ctf_unlock_radius", "150", CVAR_ARCHIVE );
 Cvar CTF_CAPTURE_TIME( "ctf_capture_time", "3", CVAR_ARCHIVE );
 Cvar CTF_CAPTURE_RADIUS( "ctf_capture_radius", "40", CVAR_ARCHIVE );
 // 3 hide status to allow sneak steal of the flag
-Cvar CTF_HIDE_STEAL_STATUS( "ctf_hide_steal_status", "0", CVAR_ARCHIVE ); 
+Cvar CTF_HIDE_STEAL_STATUS( "ctf_hide_steal_status", "0", CVAR_ARCHIVE );
+Cvar G_DISABLE_STUN( "g_disable_stun", "0", CVAR_ARCHIVE ); 
 
 ///*****************************************************************
 /// LOCAL FUNCTIONS
@@ -319,6 +320,36 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
             return true;
         }
+        else if ( votename == "g_disable_stun" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            int value = voteArg.toInt();
+            if ( voteArg != "0" && voteArg != "1" )
+            {
+                client.printMessage( "Callvote " + votename + " expects a 1 or a 0 as argument\n" );
+                return false;
+            }
+            
+            if ( voteArg == "0" && !CTF_HIDE_STEAL_STATUS.boolean )
+            {
+                client.printMessage( "stun is already enabled\n" );
+                return false;
+            }
+
+            if ( voteArg == "1" && CTF_HIDE_STEAL_STATUS.boolean )
+            {
+                client.printMessage( "stun is already disabled\n" );
+                return false;
+            }
+
+            return true;
+        }
         else if ( votename == "ctf_unlock_time" )
         {
             String voteArg = argsString.getToken( 1 );
@@ -412,12 +443,20 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 ctfInstantFlag.set( 1 );
             else
                 ctfInstantFlag.set( 0 );
-        }else if ( votename == "ctf_hide_steal_status" )
+        }
+        else if ( votename == "ctf_hide_steal_status" )
         {
             if ( argsString.getToken( 1 ).toInt() > 0 )
                 CTF_HIDE_STEAL_STATUS.set( 1 );
             else
                 CTF_HIDE_STEAL_STATUS.set( 0 );
+        }
+        else if ( votename == "g_disable_stun" )
+        {
+            if ( argsString.getToken( 1 ).toInt() > 0 )
+                G_DISABLE_STUN.set( 1 );
+            else
+                G_DISABLE_STUN.set( 0 );
         }else{
             float val = argsString.getToken( 1 ).toFloat();
             if ( val >= 0 ){
@@ -698,6 +737,10 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 {
 	Client @client = @ent.client;
+
+    if (G_DISABLE_STUN.boolean){
+        client.takeStun = false;
+    }
 
     if ( old_team != new_team )
     {
@@ -1103,7 +1146,7 @@ void GT_InitGametype()
                  + "set g_maprotation \"1\"   // 0 = same map, 1 = in order, 2 = random\n"
                  + "\n// game settings\n"
                  + "set g_scorelimit \"0\"\n"
-                 + "set g_timelimit \"20\"\n"
+                 + "set g_timelimit \"15\"\n"
                  + "set g_warmup_timelimit \"1\"\n"
                  + "set g_match_extendedtime \"5\"\n"
                  + "set g_allow_falldamage \"1\"\n"
@@ -1129,7 +1172,6 @@ void GT_InitGametype()
     gametype.respawnableItemsMask = gametype.spawnableItemsMask ;
     gametype.dropableItemsMask = gametype.spawnableItemsMask ;
     gametype.pickableItemsMask = ( gametype.spawnableItemsMask | gametype.dropableItemsMask );
-
 
     gametype.isTeamBased = true;
     gametype.isRace = false;
@@ -1212,6 +1254,8 @@ void GT_InitGametype()
     G_RegisterCallvote( "ctf_flag_instant", "1 or 0", "bool", "Enables or disables instant flag captures and unlocks" );
     // 3 hide status to allow sneak steal of the flag
     G_RegisterCallvote( "ctf_hide_steal_status", "1 or 0", "bool", "Enables or disables flag steal status" );
+    // 7 Cancel Stun
+    G_RegisterCallvote( "g_disable_stun", "1 or 0", "bool", "Disables or enables stun" );
     // 2 votable unlock & capture params
     G_RegisterCallvote( "ctf_unlock_time", "> 0", "float", "The flag's unlock length (seconds)" );
     G_RegisterCallvote( "ctf_unlock_radius", "> 0", "float", "The flag's unlock radius (default : 150)" );
