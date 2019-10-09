@@ -289,6 +289,78 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
             return true;
         }
+        else if ( votename == "ctf_unlock_time" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            int val = voteArg.toInt();
+            if ( val < "0" )
+            {
+                client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
+                return false;
+            }
+
+            return true;
+        }
+        else if ( votename == "ctf_unlock_radius" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            int val = voteArg.toInt();
+            if ( val < "0" )
+            {
+                client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
+                return false;
+            }
+
+            return true;
+        }
+        else if ( votename == "ctf_capture_time" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            int val = voteArg.toInt();
+            if ( val < "0" )
+            {
+                client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
+                return false;
+            }
+
+            return true;
+        }
+        else if ( votename == "ctf_capture_radius" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            int val = voteArg.toInt();
+            if ( val < "0" )
+            {
+                client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
+                return false;
+            }
+            
+            return true;
+        }
 
         client.printMessage( "Unknown callvote " + votename + "\n" );
         return false;
@@ -304,12 +376,29 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
             else
                 ctfAllowPowerupDrop.set( 0 );
         }
-        else if ( votename == "ctf_flag_instant" )
+        else if ( votename == "ctf_unlock_time" )
         {
-            if ( argsString.getToken( 1 ).toInt() > 0 )
-                ctfInstantFlag.set( 1 );
-            else
-                ctfInstantFlag.set( 0 );
+            int val = argsString.getToken( 1 ).toInt();
+            if ( val > 0 )
+                CTF_UNLOCK_TIME.set( val );
+        }
+        else if ( votename == "ctf_unlock_radius" )
+        {
+            int val = argsString.getToken( 1 ).toInt();
+            if ( val > 0 )
+                CTF_UNLOCK_RADIUS.set( val );
+        }
+        else if ( votename == "ctf_capture_time" )
+        {
+            int val = argsString.getToken( 1 ).toInt();
+            if ( val > 0 )
+                CTF_CAPTURE_TIME.set( val );
+        }
+        else if ( votename == "ctf_capture_radius" )
+        {
+            int val = argsString.getToken( 1 ).toInt();
+            if ( val > 0 )
+                CTF_CAPTURE_RADIUS.set( val );
         }
 
         return true;
