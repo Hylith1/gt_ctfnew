@@ -298,7 +298,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            float value = voteArg.toFloat();
+            float val = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
@@ -316,7 +316,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            float value = voteArg.toFloat();
+            float val = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
@@ -334,7 +334,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            float value = voteArg.toFloat();
+            float val = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
@@ -352,7 +352,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            float value = voteArg.toFloat();
+            float val = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );

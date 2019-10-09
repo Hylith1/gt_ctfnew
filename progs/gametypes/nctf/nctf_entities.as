@@ -242,7 +242,7 @@ class cFlagBase
 
         if ( CTF_UNLOCK_TIME.value > 0 && !ctfInstantFlag.boolean )
         {
-			array<Entity @> @inradius = G_FindInRadius( origin, CTF_CAPTURE_RADIUS.value );
+			array<Entity @> @inradius = G_FindInRadius( origin, CTF_UNLOCK_RADIUS.value );
             for( uint i = 0; i < inradius.size(); i++ )
 			{
                 @target = inradius[i];
