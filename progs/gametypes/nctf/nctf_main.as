@@ -298,7 +298,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            int val = voteArg.toInt();
+            float value = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
@@ -316,7 +316,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            int val = voteArg.toInt();
+            float value = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
@@ -334,7 +334,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            int val = voteArg.toInt();
+            float value = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
@@ -352,7 +352,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 return false;
             }
 
-            int val = voteArg.toInt();
+            float value = voteArg.toFloat();
             if ( val < "0" )
             {
                 client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
@@ -376,29 +376,28 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
             else
                 ctfAllowPowerupDrop.set( 0 );
         }
-        else if ( votename == "ctf_unlock_time" )
+        else if ( votename == "ctf_flag_instant" )
         {
-            int val = argsString.getToken( 1 ).toInt();
-            if ( val > 0 )
-                CTF_UNLOCK_TIME.set( val );
-        }
-        else if ( votename == "ctf_unlock_radius" )
-        {
-            int val = argsString.getToken( 1 ).toInt();
-            if ( val > 0 )
-                CTF_UNLOCK_RADIUS.set( val );
-        }
-        else if ( votename == "ctf_capture_time" )
-        {
-            int val = argsString.getToken( 1 ).toInt();
-            if ( val > 0 )
-                CTF_CAPTURE_TIME.set( val );
-        }
-        else if ( votename == "ctf_capture_radius" )
-        {
-            int val = argsString.getToken( 1 ).toInt();
-            if ( val > 0 )
-                CTF_CAPTURE_RADIUS.set( val );
+            if ( argsString.getToken( 1 ).toInt() > 0 )
+                ctfInstantFlag.set( 1 );
+            else
+                ctfInstantFlag.set( 0 );
+        }else{
+            float val = argsString.getToken( 1 ).toFloat();
+            if ( val >= 0 ){
+                if ( votename == "ctf_unlock_time"){
+                    CTF_UNLOCK_TIME.set( val );
+                }
+                if ( votename == "ctf_unlock_radius"){
+                    CTF_UNLOCK_RADIUS.set( val );
+                }
+                if ( votename == "ctf_capture_time" ){
+                    CTF_CAPTURE_TIME.set( val );
+                }
+                if ( votename == "ctf_capture_radius" ){
+                     CTF_CAPTURE_RADIUS.set( val );
+                }
+            }
         }
 
         return true;
@@ -1178,10 +1177,10 @@ void GT_InitGametype()
     // 3 hide status to allow sneak steal of the flag
     G_RegisterCallvote( "ctf_hide_steal_status", "1 or 0", "bool", "Enables or disables flag steal status" );
     // 2 votable unlock & capture params
-    G_RegisterCallvote( "ctf_unlock_time", "> 0", "integer", "The flag's unlock length (seconds)" );
-    G_RegisterCallvote( "ctf_unlock_radius", "> 0", "integer", "The flag's unlock radius (default : 150)" );
-    G_RegisterCallvote( "ctf_capture_time", "> 0", "integer", "The flag's capture length (seconds)" );
-    G_RegisterCallvote( "ctf_capture_radius", "> 0", "integer", "The flag's capture radius (default : 40)" );
+    G_RegisterCallvote( "ctf_unlock_time", "> 0", "float", "The flag's unlock length (seconds)" );
+    G_RegisterCallvote( "ctf_unlock_radius", "> 0", "float", "The flag's unlock radius (default : 150)" );
+    G_RegisterCallvote( "ctf_capture_time", "> 0", "float", "The flag's capture length (seconds)" );
+    G_RegisterCallvote( "ctf_capture_radius", "> 0", "float", "The flag's capture radius (default : 40)" );
 
     G_Print( "Gametype '" + gametype.title + "' initialized\n" );
 }
