@@ -740,6 +740,8 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
     if (G_DISABLE_STUN.boolean){
         client.takeStun = false;
+    }else{
+        client.takeStun = true;
     }
 
     if ( old_team != new_team )

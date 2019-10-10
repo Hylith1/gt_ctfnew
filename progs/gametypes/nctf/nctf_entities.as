@@ -20,6 +20,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // flag bases
 
 cFlagBase @fbHead = null;
+Vec3 p1_ALPHA;
+Vec3 p1_BETA;
+Vec3 p2_ALPHA;
+Vec3 p2_BETA;
+int t1_ALPHA;
+int t1_BETA;
 
 class cFlagBase
 {
@@ -104,6 +110,13 @@ class cFlagBase
         minimap.svflags = (spawner.svflags & ~uint(SVF_NOCLIENT)) | uint(SVF_BROADCAST);
         minimap.linkEntity();
         minimap.nextThink = levelTime + 1000;
+
+        if (spawner.team == TEAM_ALPHA){
+            p1_ALPHA = spawner.origin;
+        }else{
+            p1_BETA = spawner.origin;
+        }
+
     }
 
     cFlagBase()
@@ -118,6 +131,11 @@ class cFlagBase
 
     ~cFlagBase()
     {
+    }
+
+    uint timeStamp()
+    {
+        return levelTime;
     }
 
     void setCarrier( Entity @ent )
@@ -214,6 +232,11 @@ class cFlagBase
             }
 
             this.unlockTime = 0;
+            if (activator.team == TEAM_ALPHA){
+                t1_BETA = this.timeStamp();
+            }else{
+                t1_ALPHA = this.timeStamp();
+            }
             this.flagStolen( activator );
             this.owner.linkEntity();
 
@@ -694,6 +717,21 @@ void ctf_flag_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
     {
         if ( other.team == ent.team )
         {
+            int milli = 0;
+            int sec = 0;
+            int distance = 0;
+            if (ent.team == TEAM_ALPHA){
+                p2_ALPHA = ent.origin;
+                milli = abs(levelTime - t1_ALPHA);
+                sec = milli / 1000;
+                distance = sqrt(pow(p2_ALPHA.x - p1_ALPHA.x,2)+pow(p2_ALPHA.y - p1_ALPHA.y,2)+pow(p2_ALPHA.z - p1_ALPHA.z,2));
+            }else{
+                p2_BETA = ent.origin;
+                milli = abs(levelTime - t1_BETA);
+                sec = milli / 1000;
+                distance = sqrt(pow(p2_BETA.x - p1_BETA.x,2)+pow(p2_BETA.y - p1_BETA.y,2)+pow(p2_BETA.z - p1_BETA.z,2));
+            }
+            G_PrintMsg( null, "time = " + sec + " distance = " + distance + "\n");
             flagBase.flagRecovered( other );
         }
         else
