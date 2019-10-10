@@ -26,6 +26,10 @@ Vec3 p2_ALPHA;
 Vec3 p2_BETA;
 int t1_ALPHA;
 int t1_BETA;
+int protection_ALPHA_TIME;
+int protection_BETA_TIME;
+bool protection_ALPHA = false;
+bool protection_BETA = false;
 
 class cFlagBase
 {
@@ -248,6 +252,14 @@ class cFlagBase
 
     void think()
     {
+        if (protection_ALPHA && protection_ALPHA_TIME < levelTime){
+            protection_ALPHA = false;
+        }
+
+        if (protection_BETA && protection_BETA_TIME < levelTime){
+            protection_BETA = false;
+        }
+
         this.owner.nextThink = levelTime + 1;
 
         if ( match.getState() >= MATCH_STATE_POSTMATCH )
@@ -294,7 +306,7 @@ class cFlagBase
                 mins = 0;
                 maxs = 0;
 
-                if ( !tr.doTrace( origin, mins, maxs, center, target.entNum, MASK_SOLID ) )
+                if ( !tr.doTrace( origin, mins, maxs, center, target.entNum, MASK_SOLID ) && !isProtected(this.owner) )
                 {
                     this.unlockTime += frameTime;
                     if ( this.unlockTime > int( CTF_UNLOCK_TIME.value * 1000 ) )
@@ -638,6 +650,30 @@ class cFlagBase
 	}
 }
 
+bool isProtected( Entity @flagbase ){
+    if (flagbase.team == TEAM_ALPHA){
+        return protection_ALPHA;
+    }else{
+        return protection_BETA;
+    }
+}
+
+void set_Protection( int flag_team , const bool toProtect){
+    if (flag_team == TEAM_ALPHA){
+        protection_ALPHA = toProtect;
+        if (toProtect){
+            protection_ALPHA_TIME = levelTime + (CTF_PROTECTION_TIME.value * 1000);
+            G_PrintMsg( null, "Team ALPHA flag protected for "+CTF_PROTECTION_TIME.value+" seconds\n");
+        }
+    }else{
+        protection_BETA = toProtect;
+        if (toProtect){
+            protection_BETA_TIME = levelTime + (CTF_PROTECTION_TIME.value * 1000);
+            G_PrintMsg( null, "Team BETA flag protected for "+CTF_PROTECTION_TIME.value+" seconds\n");
+        }
+    }
+}
+
 cFlagBase @CTF_getBaseForOwner( Entity @ent )
 {
     for ( cFlagBase @flagBase = @fbHead; @flagBase != null; @flagBase = @flagBase.next )
@@ -717,21 +753,25 @@ void ctf_flag_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
     {
         if ( other.team == ent.team )
         {
-            int milli = 0;
-            int sec = 0;
-            int distance = 0;
-            if (ent.team == TEAM_ALPHA){
-                p2_ALPHA = ent.origin;
-                milli = abs(levelTime - t1_ALPHA);
-                sec = milli / 1000;
-                distance = sqrt(pow(p2_ALPHA.x - p1_ALPHA.x,2)+pow(p2_ALPHA.y - p1_ALPHA.y,2)+pow(p2_ALPHA.z - p1_ALPHA.z,2));
-            }else{
-                p2_BETA = ent.origin;
-                milli = abs(levelTime - t1_BETA);
-                sec = milli / 1000;
-                distance = sqrt(pow(p2_BETA.x - p1_BETA.x,2)+pow(p2_BETA.y - p1_BETA.y,2)+pow(p2_BETA.z - p1_BETA.z,2));
+            if (CTF_PROTECTION_TIME.value > 0){
+                int milli = 0;
+                int sec = 0;
+                int distance = 0;
+                if (ent.team == TEAM_ALPHA){
+                    p2_ALPHA = ent.origin;
+                    milli = abs(levelTime - t1_ALPHA);
+                    sec = milli / 1000;
+                    distance = sqrt(pow(p2_ALPHA.x - p1_ALPHA.x,2)+pow(p2_ALPHA.y - p1_ALPHA.y,2)+pow(p2_ALPHA.z - p1_ALPHA.z,2));
+                }else{
+                    p2_BETA = ent.origin;
+                    milli = abs(levelTime - t1_BETA);
+                    sec = milli / 1000;
+                    distance = sqrt(pow(p2_BETA.x - p1_BETA.x,2)+pow(p2_BETA.y - p1_BETA.y,2)+pow(p2_BETA.z - p1_BETA.z,2));
+                }
+                if (distance > 1000 || sec > 6){
+                    set_Protection( ent.team , true);
+                }
             }
-            G_PrintMsg( null, "time = " + sec + " distance = " + distance + "\n");
             flagBase.flagRecovered( other );
         }
         else

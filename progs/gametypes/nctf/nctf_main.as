@@ -80,6 +80,7 @@ Cvar CTF_CAPTURE_RADIUS( "ctf_capture_radius", "40", CVAR_ARCHIVE );
 // 3 hide status to allow sneak steal of the flag
 Cvar CTF_HIDE_STEAL_STATUS( "ctf_hide_steal_status", "0", CVAR_ARCHIVE );
 Cvar G_DISABLE_STUN( "g_disable_stun", "0", CVAR_ARCHIVE ); 
+Cvar CTF_PROTECTION_TIME( "ctf_protection_time", "5", CVAR_ARCHIVE ); 
 
 ///*****************************************************************
 /// LOCAL FUNCTIONS
@@ -350,6 +351,24 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
             return true;
         }
+        else if ( votename == "ctf_protection_time" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            float val = voteArg.toFloat();
+            if ( val < "0" )
+            {
+                client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
+                return false;
+            }
+
+            return true;
+        }
         else if ( votename == "ctf_unlock_time" )
         {
             String voteArg = argsString.getToken( 1 );
@@ -460,6 +479,9 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
         }else{
             float val = argsString.getToken( 1 ).toFloat();
             if ( val >= 0 ){
+                if ( votename == "ctf_protection_time"){
+                    CTF_PROTECTION_TIME.set( val );
+                }
                 if ( votename == "ctf_unlock_time"){
                     CTF_UNLOCK_TIME.set( val );
                 }
@@ -1259,6 +1281,7 @@ void GT_InitGametype()
     // 7 Cancel Stun
     G_RegisterCallvote( "g_disable_stun", "1 or 0", "bool", "Disables or enables stun" );
     // 2 votable unlock & capture params
+    G_RegisterCallvote( "ctf_protection_time", "> 0", "float", "The flag's proetction time (default : 4 seconds)" );
     G_RegisterCallvote( "ctf_unlock_time", "> 0", "float", "The flag's unlock length (seconds)" );
     G_RegisterCallvote( "ctf_unlock_radius", "> 0", "float", "The flag's unlock radius (default : 150)" );
     G_RegisterCallvote( "ctf_capture_time", "> 0", "float", "The flag's capture length (seconds)" );
