@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-/*
+/* Removed fixed value, now set as constant
 float CTF_UNLOCK_TIME = 2.0f;
 float CTF_CAPTURE_TIME = 3.5f;
 float CTF_UNLOCK_RADIUS = 150.0f;
@@ -79,8 +79,13 @@ Cvar CTF_CAPTURE_TIME( "ctf_capture_time", "3", CVAR_ARCHIVE );
 Cvar CTF_CAPTURE_RADIUS( "ctf_capture_radius", "40", CVAR_ARCHIVE );
 // 3 hide status to allow sneak steal of the flag
 Cvar CTF_HIDE_STEAL_STATUS( "ctf_hide_steal_status", "0", CVAR_ARCHIVE );
+// Allow to disable Stun
 Cvar G_DISABLE_STUN( "g_disable_stun", "0", CVAR_ARCHIVE ); 
-Cvar CTF_PROTECTION_TIME( "ctf_protection_time", "5", CVAR_ARCHIVE ); 
+// Create a protection time for the flag
+Cvar CTF_PROTECTION_TIME( "ctf_protection_time", "5", CVAR_ARCHIVE );
+// Create a protection time for the flag
+Cvar CTF_RESPAWN_TIME_ATTACKER( "respawn_time_attacker", "2", CVAR_ARCHIVE ); 
+Cvar CTF_RESPAWN_TIME_DEFENDER( "respawn_time_defender", "5", CVAR_ARCHIVE ); 
 
 ///*****************************************************************
 /// LOCAL FUNCTIONS
@@ -740,17 +745,33 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
     else if ( score_event == "kill" )
     {
         Entity @attacker = null;
-
         if ( @client != null )
             @attacker = @client.getEnt();
 
         int arg1 = args.getToken( 0 ).toInt();
         int arg2 = args.getToken( 1 ).toInt();
-
-        CTF_playerKilled( G_GetEntity( arg1 ), attacker, G_GetEntity( arg2 ) );
+        Entity @ent = G_GetEntity( arg1 );
+        NPlayer @player = @GetPlayer( client );
+        bool isPlayerDefender = false;
+        // target, attacker, inflictor
+        CTF_playerKilled( ent, attacker, G_GetEntity( arg2 ) );
+        if ( CTF_RESPAWN_TIME_ATTACKER.value > 0 || CTF_RESPAWN_TIME_DEFENDER.value > 0 ){
+            if (ent.team == TEAM_ALPHA){
+                isPlayerDefender = false;
+            }
+            else{
+                isPlayerDefender = true;
+            }
+            if (isPlayerDefender){
+                player.respawnTime = levelTime + CTF_RESPAWN_TIME_DEFENDER.value * 1000;
+            }else{
+                player.respawnTime = levelTime + CTF_RESPAWN_TIME_ATTACKER.value * 1000;
+            }
+        }
     }
     else if ( score_event == "award" )
     {
+        
     }
 }
 
@@ -759,6 +780,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 {
 	Client @client = @ent.client;
+    NPlayer @player = @GetPlayer( client );
 
     if (G_DISABLE_STUN.boolean){
         client.takeStun = false;
@@ -768,7 +790,9 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
     if ( old_team != new_team )
     {
-        // ** MISSING CLEAR SCORES **
+        // Set newly joined players to respawn queue
+        if ( new_team == TEAM_ALPHA || new_team == TEAM_BETA )
+            player.respawnTime = levelTime + CTF_RESPAWN_TIME_ATTACKER.value * 1000;
     }
 
     if ( ent.isGhosting() )
@@ -841,6 +865,7 @@ void GT_ThinkRules()
     }
 
     GENERIC_Think();
+    NCTF_RespawnQueuedPlayers();
 
     if ( match.getState() >= MATCH_STATE_POSTMATCH )
         return;
@@ -931,8 +956,7 @@ void GT_ThinkRules()
     for ( int i = 0; i < maxClients; i++ )
     {
         Entity @ent = @G_GetClient( i ).getEnt();
-
-        if( ent.client.state() < CS_SPAWNED )
+        if( ent.client.state() < CS_SPAWNED ){
             continue;
 
         // check maxHealth rule
@@ -1120,8 +1144,7 @@ void GT_MatchStateStarted()
 
     case MATCH_STATE_PLAYTIME:
         GENERIC_SetUpMatch();
-        CTF_ResetFlags();
-        firstSpawn = false;
+        NCTF_SETUP();
         break;
 
     case MATCH_STATE_POSTMATCH:
@@ -1135,15 +1158,44 @@ void GT_MatchStateStarted()
     }
 }
 
+void NCTF_SETUP(){
+    firstSpawn = false;
+    CTF_ResetFlags();
+
+    // set spawnsystem type to not respawn the players when they die
+    for ( int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
+        gametype.setTeamSpawnsystem( team, SPAWNSYSTEM_HOLD, 0, 0, false );
+
+    // clear scores
+    Entity @ent;
+    Team @team;
+    int i;
+
+    for ( i = TEAM_PLAYERS; i < GS_MAX_TEAMS; i++ )
+    {
+        @team = @G_GetTeam( i );
+        team.stats.clear();
+
+        // respawn all clients inside the playing teams
+        for ( int j = 0; @team.ent( j ) != null; j++ )
+        {
+            @ent = @team.ent( j );
+            ent.client.stats.clear(); // clear player scores & stats
+        }
+    }
+}
+
 // the gametype is shutting down cause of a match restart or map change
 void GT_Shutdown()
 {
+
 }
 
 // The map entities have just been spawned. The level is initialized for
 // playing, but nothing has yet started.
 void GT_SpawnGametype()
 {
+
 }
 
 // Important: This function is called before any entity is spawned, and
@@ -1227,10 +1279,10 @@ void GT_InitGametype()
     if ( gametype.isInstagib )
     {
         gametype.spawnpointRadius *= 2;
-        //CTF_UNLOCK_TIME = 0;
-        //CTF_CAPTURE_TIME = 0;
-        //CTF_UNLOCK_RADIUS = 0;
-        //CTF_CAPTURE_RADIUS = 0;
+        CTF_UNLOCK_TIME.set(0);
+        CTF_CAPTURE_TIME.set(0);
+        CTF_UNLOCK_RADIUS.set(0);
+        CTF_CAPTURE_RADIUS.set(0);
     }
 
     // set spawnsystem type
@@ -1278,10 +1330,11 @@ void GT_InitGametype()
     G_RegisterCallvote( "ctf_flag_instant", "1 or 0", "bool", "Enables or disables instant flag captures and unlocks" );
     // 3 hide status to allow sneak steal of the flag
     G_RegisterCallvote( "ctf_hide_steal_status", "1 or 0", "bool", "Enables or disables flag steal status" );
-    // 7 Cancel Stun
+    // Cancel Stun
     G_RegisterCallvote( "g_disable_stun", "1 or 0", "bool", "Disables or enables stun" );
-    // 2 votable unlock & capture params
+    // Protection time
     G_RegisterCallvote( "ctf_protection_time", "> 0", "float", "The flag's proetction time (default : 4 seconds)" );
+    // 2 votable unlock & capture params
     G_RegisterCallvote( "ctf_unlock_time", "> 0", "float", "The flag's unlock length (seconds)" );
     G_RegisterCallvote( "ctf_unlock_radius", "> 0", "float", "The flag's unlock radius (default : 150)" );
     G_RegisterCallvote( "ctf_capture_time", "> 0", "float", "The flag's capture length (seconds)" );

@@ -24,10 +24,10 @@ Vec3 p1_ALPHA;
 Vec3 p1_BETA;
 Vec3 p2_ALPHA;
 Vec3 p2_BETA;
-int t1_ALPHA;
-int t1_BETA;
-int protection_ALPHA_TIME;
-int protection_BETA_TIME;
+uint t1_ALPHA;
+uint t1_BETA;
+uint protection_ALPHA_TIME;
+uint protection_BETA_TIME;
 bool protection_ALPHA = false;
 bool protection_BETA = false;
 

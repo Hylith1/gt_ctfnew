@@ -11,6 +11,7 @@ generic/awards.as;
 
 nctf/nctf_main.as;
 nctf/nctf_entities.as;
+nctf/nctf_player.as;
 
 legacy/quake1.as;
 
