@@ -662,14 +662,14 @@ void set_Protection( int flag_team , const bool toProtect){
     if (flag_team == TEAM_ALPHA){
         protection_ALPHA = toProtect;
         if (toProtect){
-            protection_ALPHA_TIME = levelTime + (CTF_PROTECTION_TIME.value * 1000);
-            G_PrintMsg( null, "Team ALPHA flag protected for "+CTF_PROTECTION_TIME.value+" seconds\n");
+            protection_ALPHA_TIME = levelTime + CTF_PROTECTION_TIME.value * 1000;
+            G_PrintMsg( null, "Team ALPHA flag protected for " + CTF_PROTECTION_TIME.value + " seconds\n");
         }
     }else{
         protection_BETA = toProtect;
         if (toProtect){
-            protection_BETA_TIME = levelTime + (CTF_PROTECTION_TIME.value * 1000);
-            G_PrintMsg( null, "Team BETA flag protected for "+CTF_PROTECTION_TIME.value+" seconds\n");
+            protection_BETA_TIME = levelTime + CTF_PROTECTION_TIME.value * 1000;
+            G_PrintMsg( null, "Team BETA flag protected for " + CTF_PROTECTION_TIME.value + " seconds\n");
         }
     }
 }
@@ -758,15 +758,15 @@ void ctf_flag_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
                 int sec = 0;
                 int distance = 0;
                 if (ent.team == TEAM_ALPHA){
-                    p2_ALPHA = ent.origin;
+                	cFlagBase @alphaBase = @CTF_getBaseForTeam( TEAM_ALPHA );
                     milli = abs(levelTime - t1_ALPHA);
                     sec = milli / 1000;
-                    distance = sqrt(pow(p2_ALPHA.x - p1_ALPHA.x,2)+pow(p2_ALPHA.y - p1_ALPHA.y,2)+pow(p2_ALPHA.z - p1_ALPHA.z,2));
+	            	distance = ent.origin.distance( p1_ALPHA );
                 }else{
-                    p2_BETA = ent.origin;
+	            	cFlagBase @betaBase = @CTF_getBaseForTeam( TEAM_BETA );
                     milli = abs(levelTime - t1_BETA);
                     sec = milli / 1000;
-                    distance = sqrt(pow(p2_BETA.x - p1_BETA.x,2)+pow(p2_BETA.y - p1_BETA.y,2)+pow(p2_BETA.z - p1_BETA.z,2));
+	            	distance = ent.origin.distance( p1_BETA );
                 }
                 if (distance > 1000 || sec > 6){
                     set_Protection( ent.team , true);

@@ -23,7 +23,7 @@ class NPlayer
 {
     Client @client;
     Entity @ent;
-
+    bool clicked = false;
     uint respawnTime;
 	
     NPlayer()
@@ -44,17 +44,22 @@ class NPlayer
         if ( this.respawnTime == 0 )
             return;
 
-        if ( (this.respawnTime - 1000) > levelTime )
+        if ( (this.respawnTime - 900) > levelTime )
         {
-            int respawn = ( this.respawnTime - levelTime ) / 1000;
+            int respawn = (( this.respawnTime - levelTime + 900 ) / 1000);
             if ( respawn > 0 )
                 G_CenterPrintMsg( this.ent, "Respawning in " + respawn + " seconds" );
         }
         else
         {
-            this.respawnTime = 0;
-            this.client.respawn( false );
-			G_CenterPrintMsg( this.ent, "\n" );
+            this.clicked = true;
+            G_CenterPrintMsg( this.ent, "Click to respawn" );
+            if (this.clicked || this.respawnTime + 3000 < levelTime || this.client.getBot() != null ){
+                this.respawnTime = 0;
+                this.client.respawn( false );
+                this.clicked = false;
+    			G_CenterPrintMsg( this.ent, "\n" );
+            }
         }
     }
 }

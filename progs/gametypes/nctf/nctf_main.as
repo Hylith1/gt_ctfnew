@@ -169,7 +169,11 @@ void CTF_SetVoicecommQuickMenu( Client @client )
 
 bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc )
 {
-    if ( cmdString == "drop" )
+    if ( cmdString == "+attack"){
+        NPlayer @player = @GetPlayer( client );
+        player.clicked = true;
+    }
+    else if ( cmdString == "drop" )
     {
         String token;
 
@@ -439,6 +443,42 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
             
             return true;
         }
+        else if ( votename == "respawn_time_attacker" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            float val = voteArg.toFloat();
+            if ( val < "0" )
+            {
+                client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
+                return false;
+            }
+            
+            return true;
+        }
+        else if ( votename == "respawn_time_defender" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            float val = voteArg.toFloat();
+            if ( val < "0" )
+            {
+                client.printMessage( "Callvote " + votename + " expects >= 0 as argument\n" );
+                return false;
+            }
+            
+            return true;
+        }        
 
         client.printMessage( "Unknown callvote " + votename + "\n" );
         return false;
@@ -491,6 +531,12 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                 }
                 if ( votename == "ctf_capture_radius" ){
                      CTF_CAPTURE_RADIUS.set( val );
+                }
+                if ( votename == "respawn_time_attacker" ){
+                     CTF_RESPAWN_TIME_ATTACKER.set( val );
+                }
+                if ( votename == "respawn_time_defender" ){
+                     CTF_RESPAWN_TIME_DEFENDER.set( val );
                 }
             }
         }
@@ -752,17 +798,29 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
         NPlayer @targetPlayer = @GetPlayer( ent.client );
 
         if ( CTF_RESPAWN_TIME_ATTACKER.value > 0 || CTF_RESPAWN_TIME_DEFENDER.value > 0 ){
+            cFlagBase @alphaBase = @CTF_getBaseForTeam( TEAM_ALPHA );
+            cFlagBase @betaBase = @CTF_getBaseForTeam( TEAM_BETA );
+            float distance_to_alpha_flag = ent.origin.distance( alphaBase.owner.origin );
+            float distance_to_beta_flag = ent.origin.distance( betaBase.owner.origin );
             if (ent.team == TEAM_ALPHA){
-                isPlayerDefender = false;
+                if (distance_to_beta_flag > distance_to_alpha_flag * 1.15){
+                    isPlayerDefender = true;
+                }else{
+                    isPlayerDefender = false;
+                }
             }
             else{
-                isPlayerDefender = true;
+                if (distance_to_alpha_flag > distance_to_beta_flag * 1.15){
+                    isPlayerDefender = true;
+                }else{
+                    isPlayerDefender = false;
+                }
             }
             if (isPlayerDefender){
-                player.respawnTime = levelTime + CTF_RESPAWN_TIME_DEFENDER.value * 1000;
+                targetPlayer.respawnTime = levelTime + CTF_RESPAWN_TIME_DEFENDER.value * 1000;
             }
             else{
-                player.respawnTime = levelTime + CTF_RESPAWN_TIME_ATTACKER.value * 1000;
+                targetPlayer.respawnTime = levelTime + CTF_RESPAWN_TIME_ATTACKER.value * 1000;
             }
         }
     }
@@ -863,7 +921,8 @@ void GT_ThinkRules()
     }
 
     GENERIC_Think();
-    NCTF_RespawnQueuedPlayers();
+    if ( match.getState() != MATCH_STATE_WARMUP )
+        NCTF_RespawnQueuedPlayers();
 
     if ( match.getState() >= MATCH_STATE_POSTMATCH )
         return;
@@ -1331,12 +1390,15 @@ void GT_InitGametype()
     // Cancel Stun
     G_RegisterCallvote( "g_disable_stun", "1 or 0", "bool", "Disables or enables stun" );
     // Protection time
-    G_RegisterCallvote( "ctf_protection_time", "> 0", "float", "The flag's proetction time (default : 4 seconds)" );
+    G_RegisterCallvote( "ctf_protection_time", "> 0", "float", "The flag's protection time (default : 4 seconds)" );
     // 2 votable unlock & capture params
     G_RegisterCallvote( "ctf_unlock_time", "> 0", "float", "The flag's unlock length (seconds)" );
     G_RegisterCallvote( "ctf_unlock_radius", "> 0", "float", "The flag's unlock radius (default : 150)" );
     G_RegisterCallvote( "ctf_capture_time", "> 0", "float", "The flag's capture length (seconds)" );
     G_RegisterCallvote( "ctf_capture_radius", "> 0", "float", "The flag's capture radius (default : 40)" );
+    //Respawn time
+    G_RegisterCallvote( "respawn_time_attacker", "> 0", "float", "Attackers respawn Time (default : 2 seconds)" );
+    G_RegisterCallvote( "respawn_time_defender", "> 0", "float", "The flag's capture radius (default : 5 seconds)" );
 
     InitPlayers();
     G_Print( "Gametype '" + gametype.title + "' initialized\n" );
