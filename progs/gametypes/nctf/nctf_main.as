@@ -17,13 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-/* Removed fixed value, now set as constant
-float CTF_UNLOCK_TIME = 2.0f;
-float CTF_CAPTURE_TIME = 3.5f;
-float CTF_UNLOCK_RADIUS = 150.0f;
-float CTF_CAPTURE_RADIUS = 40.0f;
-*/
-
 const float CTF_AUTORETURN_TIME = 30.0f;
 const int CTF_BONUS_RECOVERY = 2;
 const int CTF_BONUS_STEAL = 3;
@@ -741,6 +734,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 {
     if ( score_event == "dmg" )
     {
+
     }
     else if ( score_event == "kill" )
     {
@@ -751,10 +745,12 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
         int arg1 = args.getToken( 0 ).toInt();
         int arg2 = args.getToken( 1 ).toInt();
         Entity @ent = G_GetEntity( arg1 );
-        NPlayer @player = @GetPlayer( client );
         bool isPlayerDefender = false;
         // target, attacker, inflictor
         CTF_playerKilled( ent, attacker, G_GetEntity( arg2 ) );
+
+        NPlayer @targetPlayer = @GetPlayer( ent.client );
+
         if ( CTF_RESPAWN_TIME_ATTACKER.value > 0 || CTF_RESPAWN_TIME_DEFENDER.value > 0 ){
             if (ent.team == TEAM_ALPHA){
                 isPlayerDefender = false;
@@ -764,7 +760,8 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
             }
             if (isPlayerDefender){
                 player.respawnTime = levelTime + CTF_RESPAWN_TIME_DEFENDER.value * 1000;
-            }else{
+            }
+            else{
                 player.respawnTime = levelTime + CTF_RESPAWN_TIME_ATTACKER.value * 1000;
             }
         }
@@ -791,8 +788,9 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
     if ( old_team != new_team )
     {
         // Set newly joined players to respawn queue
-        if ( new_team == TEAM_ALPHA || new_team == TEAM_BETA )
+        if ( new_team == TEAM_ALPHA || new_team == TEAM_BETA ){
             player.respawnTime = levelTime + CTF_RESPAWN_TIME_ATTACKER.value * 1000;
+        }
     }
 
     if ( ent.isGhosting() )
@@ -956,7 +954,7 @@ void GT_ThinkRules()
     for ( int i = 0; i < maxClients; i++ )
     {
         Entity @ent = @G_GetClient( i ).getEnt();
-        if( ent.client.state() < CS_SPAWNED ){
+        if( ent.client.state() < CS_SPAWNED )
             continue;
 
         // check maxHealth rule
@@ -1159,9 +1157,9 @@ void GT_MatchStateStarted()
 }
 
 void NCTF_SETUP(){
-    firstSpawn = false;
     CTF_ResetFlags();
-
+    firstSpawn = false;
+    
     // set spawnsystem type to not respawn the players when they die
     for ( int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
         gametype.setTeamSpawnsystem( team, SPAWNSYSTEM_HOLD, 0, 0, false );
@@ -1340,5 +1338,6 @@ void GT_InitGametype()
     G_RegisterCallvote( "ctf_capture_time", "> 0", "float", "The flag's capture length (seconds)" );
     G_RegisterCallvote( "ctf_capture_radius", "> 0", "float", "The flag's capture radius (default : 40)" );
 
+    InitPlayers();
     G_Print( "Gametype '" + gametype.title + "' initialized\n" );
 }
